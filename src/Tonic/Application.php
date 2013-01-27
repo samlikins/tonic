@@ -14,8 +14,6 @@ class Application
 
     private $baseUri = '';
 
-    private $methodAnnotations = array();
-
     /**
      * Metadata of the loaded resources
      */
@@ -290,24 +288,23 @@ class Application
         $metadata = array();
 
         foreach (get_class_methods($className) as $methodName) {
-            $methodMetadata = array();
 
             $methodReflector = new \ReflectionMethod($className, $methodName);
+            if ($methodReflector->isPublic() && $methodReflector->getDeclaringClass()->name != 'Tonic\Resource') {
 
-            $docComment = $this->parseDocComment($methodReflector->getDocComment());
-            foreach ($this->methodAnnotations as $annotation) {
-                if (array_key_exists('@'.$annotation, $docComment)) {
-                    foreach ($docComment as $annotationName => $value) {
-                        $methodName = substr($annotationName, 1);
-                        if (method_exists($className, $methodName)) {
-                            foreach ($value as $v) {
-                                $methodMetadata[$methodName][] = $v;
-                            }
+                $methodMetadata = array();
+
+                $docComment = $this->parseDocComment($methodReflector->getDocComment());
+
+                foreach ($docComment as $annotationName => $value) {
+                    $methodName = substr($annotationName, 1);
+                    if (method_exists($className, $methodName)) {
+                        foreach ($value as $v) {
+                            $methodMetadata[$methodName][] = $v;
                         }
                     }
-                    $metadata[$methodReflector->getName()] = $methodMetadata;
-                    break;
                 }
+                $metadata[$methodReflector->getName()] = $methodMetadata;
             }
         }
 
